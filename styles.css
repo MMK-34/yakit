@@ -326,3 +326,12 @@ body { background: radial-gradient(120% 40% at 50% -10%, rgba(200, 240, 60, .07)
 #view.enter > :nth-child(6) { animation-delay: .2s; } #view.enter > :nth-child(n+7) { animation-delay: .24s; }
 @media (prefers-reduced-motion: reduce) { #view.enter > * { animation: none; } }
 @media (max-width: 360px) { .ring { width: 176px; height: 176px; } .ring-in b { font-size: 46px; } .mt b { font-size: 23px; } }
+
+/* fotoğraf gönderme */
+.step { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); padding: 18px 0 0; }
+.pick { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.thumbs { display: flex; gap: 8px; overflow-x: auto; margin-top: 12px; scrollbar-width: none; }
+.thumbs::-webkit-scrollbar { display: none; }
+.thumbs img { width: 76px; height: 76px; flex: none; object-fit: cover; border-radius: 14px; border: 1px solid var(--edge); }
+#view > .meal-act { margin-top: 0; }
+#view > .meal-act .btn.ghost { background: var(--card); }

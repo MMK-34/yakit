@@ -160,7 +160,7 @@ function vToday() {
   });
 
   h += '<section class="card row"><label for="act">Apple aktif enerji <small>opsiyonel, kcal</small></label><input id="act" inputmode="numeric" placeholder="—" value="' + esc(dy.active) + '" data-ch="active"></section>';
-  h += '<button class="btn ghost" data-a="copy">Durumu Claude için kopyala</button>';
+  h += '<div class="meal-act"><button class="btn sm ghost" data-a="photo">Fotoğraf gönder</button><button class="btn sm ghost" data-a="copy">Durumu kopyala</button></div>';
   return h;
 }
 
@@ -316,7 +316,9 @@ function drawSheet() {
     if (s.tab === 'liste') h += '<input id="q" class="search" type="search" placeholder="Besin ara: tavuk, yulaf, probis…" value="' + esc(s.q) + '" autocomplete="off"><div id="foodList" class="foods">' + foodList() + '</div>';
     else if (s.tab === 'manuel') h += '<div class="form2 one"><label>Ne yedin?<input id="mn" placeholder="örn. Ev yapımı mantı, 1 tabak" autocomplete="off"></label></div><div class="form2 four"><label>kcal<input id="mk" inputmode="numeric"></label><label>Protein<input id="mp" inputmode="decimal"></label><label>Karb.<input id="mc" inputmode="decimal"></label><label>Yağ<input id="mf" inputmode="decimal"></label></div><label class="chk"><input type="checkbox" id="ms"> Listeme kaydet, tekrar kullanırım</label><button class="btn big" data-a="addman">Ekle</button>';
     else {
-      h += '<p class="muted">Yemek fotoğraflarını Claude\'a gönder. Verdiği kodu kopyala ve buraya yapıştır.</p><textarea id="cc" rows="5" placeholder=\'{"d":"2026-11-10","m":[…]}\'></textarea><div class="meal-act"><button class="btn sm ghost" data-a="paste">Panodan yapıştır</button><button class="btn sm" data-a="parse">Çözümle</button></div>';
+      h += '<h4 class="step">1 · Fotoğrafları gönder</h4><label class="btn ghost pick">Fotoğraf seç ya da çek<input id="ph" type="file" accept="image/*" multiple hidden></label>';
+      if (s.files && s.files.length) h += '<div class="thumbs">' + s.thumbs.map(u => '<img src="' + u + '" alt="">').join('') + '</div><button class="btn" data-a="share">' + s.files.length + ' fotoğrafı Claude\'a gönder</button>';
+      h += '<h4 class="step">2 · Claude\'un verdiği kodu yapıştır</h4><textarea id="cc" rows="5" placeholder=\'{"d":"2026-11-10","m":[…]}\'></textarea><div class="meal-act"><button class="btn sm ghost" data-a="paste">Panodan yapıştır</button><button class="btn sm" data-a="parse">Çözümle</button></div>';
       if (s.parsed) {
         const tot = s.parsed.m.reduce((a, m) => a + m.k, 0);
         h += '<div class="prev"><h4>' + fmtLong.format(pd(s.parsed.d)) + (s.parsed.t ? ' · ' + TYPES[s.parsed.t].n : '') + '</h4><ul>' + s.parsed.m.map(m => '<li><div><b>' + esc(m.n) + '</b><small>' + SLOTS[m.s] + ' · P ' + r0(m.p) + ' · K ' + r0(m.c) + ' · Y ' + r0(m.f) + '</small></div><span>' + r0(m.k) + '</span></li>').join('') + '</ul></div><button class="btn big" data-a="import">' + s.parsed.m.length + ' kaydı ekle · ' + r0(tot) + ' kcal</button>';
@@ -387,6 +389,13 @@ const A = {
   },
   undo: () => { if (undo) { undo(); undo = null; $('#toast').classList.remove('on'); } },
   copy: async () => toast(await copy(statusText()) ? 'Kopyalandı. Claude\'a yapıştır.' : 'Kopyalanamadı'),
+  photo: () => openAdd(null, 'claude'),
+  share: async () => {
+    const files = sheet.files || [];
+    if (!navigator.canShare || !navigator.canShare({ files })) return toast('Bu cihazda paylaşım yok, fotoğrafları elle gönder');
+    try { await navigator.share({ files, text: 'Bu fotoğraflardaki öğünleri hesapla ve Yakıt kodunu ver.\n\n' + statusText() }); }
+    catch (e) { if (e.name !== 'AbortError') toast('Paylaşılamadı'); }
+  },
   swap: v => { planIdx[v] = (planIdx[v] || 0) + 1; render(); },
   eat: v => { const x = planFor(cur).find(p => p.key === v); addMeal(cur, { n: x.m.n, s: x.slot, k: x.k, p: x.p, c: x.c, f: x.f }); save(); toast(SLOTS[x.slot] + ' öğününe eklendi'); },
   body: () => {
@@ -416,7 +425,12 @@ document.addEventListener('input', e => {
   else if (t.dataset.pf) { S.profile[t.dataset.pf] = t.value.trim(); save(); const b = $('#calcBox'); if (b) b.innerHTML = calcBox(); }
 });
 document.addEventListener('change', e => {
-  if (e.target.dataset.ch === 'active') { getDay(cur).active = e.target.value.trim(); save(); render(); }
+  if (e.target.id === 'ph' && sheet) {
+    (sheet.thumbs || []).forEach(u => URL.revokeObjectURL(u));
+    sheet.files = Array.from(e.target.files); sheet.thumbs = sheet.files.map(f => URL.createObjectURL(f));
+    const v = $('#cc').value; drawSheet(); $('#cc').value = v;
+  }
+  else if (e.target.dataset.ch === 'active') { getDay(cur).active = e.target.value.trim(); save(); render(); }
 });
 $('#scrim').addEventListener('click', closeSheet);
 // Uygulama arka plandan dönünce gün değişmiş olabilir.
