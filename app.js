@@ -27,6 +27,7 @@ const today = () => iso(new Date());
 const fmtLong = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
 const fmtShort = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
 const fmtDow = new Intl.DateTimeFormat('tr-TR', { weekday: 'short' });
+const fmtWd = new Intl.DateTimeFormat('tr-TR', { weekday: 'long' });
 
 /* ---------- durum ---------- */
 let S = { profile: { done: false, sex: 'm', age: '', height: '', weight: '', bf: '', goal: '', def: 0.2, appleRest: '' }, days: {}, body: [], custom: [] };
@@ -112,9 +113,15 @@ const ICON = {
 };
 const seg = (act, opts, val, cls) => '<div class="seg ' + (cls || '') + '">' + opts.map(o =>
   '<button data-a="' + act + '" data-v="' + o[0] + '" class="' + (String(o[0]) === String(val) ? 'on' : '') + '">' + o[1] + '</button>').join('') + '</div>';
-const bar = (label, v, t, unit) => {
+const bar = (label, v, t, cls) => {
   const pct = Math.min(100, t ? v / t * 100 : 0);
-  return '<div class="macro"><div class="macro-top"><span>' + label + '</span><b>' + r0(v) + '<i> / ' + t + ' ' + unit + '</i></b></div><div class="track"><div class="fill' + (v > t * 1.08 ? ' over' : '') + '" style="width:' + pct + '%"></div></div></div>';
+  return '<div class="mt ' + cls + '"><small>' + label + '</small><b>' + r0(v) + '</b><i>/ ' + t + ' g</i><div class="track"><div class="fill' + (v > t * 1.08 ? ' over' : '') + '" style="width:' + pct + '%"></div></div></div>';
+};
+const SLOT_IC = {
+  kahvalti: '<svg viewBox="0 0 24 24"><path d="M4 18h16M7 18a5 5 0 0110 0M12 6v3M5.500 9.500l1.800 1.800M18.500 9.500l-1.800 1.800"/></svg>',
+  ogle: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.600 5.600l1.400 1.400M17 17l1.400 1.400M18.400 5.600L17 7M7 17l-1.400 1.400"/></svg>',
+  ara: '<svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>',
+  aksam: '<svg viewBox="0 0 24 24"><path d="M20 14.500A8 8 0 019.500 4a8 8 0 1010.500 10.500z"/></svg>'
 };
 
 /* ---------- Bugün ---------- */
@@ -122,18 +129,24 @@ function vToday() {
   const dy = getDay(cur), co = coach(cur), c = co.c;
   const over = c.left < 0, R = 52, C = 2 * Math.PI * R, pr = Math.min(1, c.eat.k / c.target);
   const isToday = cur === today();
-  let h = '<header class="top"><button class="nav" data-a="day" data-v="-1" aria-label="Önceki gün">‹</button><div class="top-mid"><small>' +
-    (isToday ? 'Bugün' : cur === shift(today(), -1) ? 'Dün' : '&nbsp;') + '</small><h1>' + fmtLong.format(pd(cur)) + '</h1></div>' +
-    '<button class="nav" data-a="day" data-v="1" aria-label="Sonraki gün"' + (isToday ? ' disabled' : '') + '>›</button></header>';
+  let h = '<header class="top plain"><div class="top-mid"><small>' + fmtLong.format(pd(cur)) + '</small><h1>' +
+    (isToday ? 'Bugün' : cur === shift(today(), -1) ? 'Dün' : fmtWd.format(pd(cur))) + '</h1></div></header>';
+  h += '<div class="week">';
+  for (let i = 13; i >= 0; i--) {
+    const d = shift(today(), -i), has = S.days[d] && S.days[d].meals.length;
+    h += '<button data-a="goto" data-v="' + d + '" class="' + (d === cur ? 'on' : '') + '"><small>' + fmtDow.format(pd(d)) + '</small><b>' + pd(d).getDate() + '</b><i class="' + (has ? 'dot' : '') + '"></i></button>';
+  }
+  h += '</div>';
 
   h += seg('type', Object.keys(TYPES).map(k => [k, TYPES[k].s]), dy.type, 'seg-type');
 
-  h += '<section class="card hero"><div class="ring"><svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="' + R + '"/>' +
+  h += '<section class="card hero"><div class="ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ecff8a"/><stop offset="1" stop-color="#a6d91c"/></linearGradient></defs><circle class="ring-bg" cx="60" cy="60" r="' + R + '"/>' +
     '<circle class="ring-fg' + (over ? ' over' : '') + '" cx="60" cy="60" r="' + R + '" stroke-dasharray="' + C + '" stroke-dashoffset="' + C * (1 - pr) + '"/></svg>' +
     '<div class="ring-in"><b class="' + (over ? 'neg' : '') + '">' + Math.abs(c.left) + '</b><span>kcal ' + (over ? 'fazla' : 'kaldı') + '</span></div></div>' +
+    '<div class="hero-meta"><span class="pill">' + TYPES[dy.type].n + '</span><span>açık %' + r0(c.def * 100) + '</span></div>' +
     '<dl class="hero-stats"><div><dt>Hedef</dt><dd>' + c.target + '</dd></div><div><dt>Yenen</dt><dd>' + r0(c.eat.k) + '</dd></div><div><dt>Günlük yakım</dt><dd>' + r0(c.tdee) + '</dd></div></dl></section>';
 
-  h += '<section class="card macros">' + bar('Protein', c.eat.p, c.prot, 'g') + bar('Karbonhidrat', c.eat.c, c.carb, 'g') + bar('Yağ', c.eat.f, c.fat, 'g') + '</section>';
+  h += '<section class="macros">' + bar('Protein', c.eat.p, c.prot, 'p') + bar('Karb.', c.eat.c, c.carb, 'c') + bar('Yağ', c.eat.f, c.fat, 'f') + '</section>';
 
   h += '<section class="card coach ' + co.tone + '"><div class="coach-tag">Diyetisyen notu</div><h2>' + co.title + '</h2><p>' + co.text + '</p>';
   if (co.sugg.length) h += '<div class="chips">' + co.sugg.map(f => '<button data-a="food" data-n="' + esc(f.n) + '">' + esc(f.n) + '<i>' + f.k + '</i></button>').join('') + '</div>';
@@ -141,7 +154,7 @@ function vToday() {
 
   Object.keys(SLOTS).forEach(s => {
     const ms = dy.meals.filter(m => m.s === s), sum = ms.reduce((a, m) => a + num(m.k), 0);
-    h += '<section class="slot"><div class="slot-head"><h3>' + SLOTS[s] + '</h3><span>' + (sum ? r0(sum) + ' kcal' : '') + '</span><button data-a="add" data-v="' + s + '" aria-label="' + SLOTS[s] + ' ekle">+</button></div>';
+    h += '<section class="slot"><div class="slot-head"><i class="slot-ic">' + SLOT_IC[s] + '</i><h3>' + SLOTS[s] + '</h3><span>' + (sum ? r0(sum) + ' kcal' : 'boş') + '</span><button data-a="add" data-v="' + s + '" aria-label="' + SLOTS[s] + ' ekle">+</button></div>';
     h += ms.length ? '<ul>' + ms.map(m => '<li><div><b>' + esc(m.n) + '</b><small>P ' + r0(m.p) + ' · K ' + r0(m.c) + ' · Y ' + r0(m.f) + '</small></div><span class="kc">' + r0(m.k) + '</span><button class="del" data-a="del" data-v="' + m.id + '" aria-label="Sil">×</button></li>').join('') + '</ul>' : '';
     h += '</section>';
   });
@@ -250,8 +263,12 @@ function render() {
   $('#view').innerHTML = first ? vProfile(true) : ({ today: vToday, plan: vPlan, prog: vProg, prof: vProfile })[tab]();
   $('#tabs').hidden = first;
   document.querySelectorAll('#tabs [data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  const wk = $('.week'), on = wk && wk.querySelector('.on');
+  if (on) wk.scrollLeft = on.offsetLeft - wk.offsetLeft - (wk.clientWidth - on.offsetWidth) / 2;
 }
-function go(t) { tab = t; render(); window.scrollTo(0, 0); }
+let enterT;
+function enter() { const v = $('#view'); v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter'); clearTimeout(enterT); enterT = setTimeout(() => v.classList.remove('enter'), 800); }
+function go(t) { tab = t; render(); window.scrollTo(0, 0); enter(); }
 
 let toastT;
 function toast(msg, undoFn) {
@@ -406,5 +423,5 @@ $('#scrim').addEventListener('click', closeSheet);
 let lastDay = today();
 document.addEventListener('visibilitychange', () => { if (!document.hidden && today() !== lastDay) { lastDay = cur = today(); render(); } });
 
-render();
+render(); enter();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => { });

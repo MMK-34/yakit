@@ -1,5 +1,5 @@
 // Çevrimdışı kabuk: önce önbellek, arka planda güncelle.
-const CACHE = 'yakit-v1';
+const CACHE = 'yakit-v2';
 const FILES = ['./', 'index.html', 'styles.css', 'data.js', 'app.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {
