@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yakıt</title>
+<meta name="description" content="Kişisel kalori ve makro takibi">
+<meta name="theme-color" content="#0d100f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yakıt">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main id="view"></main>
+
+<nav id="tabs" hidden>
+  <button data-a="tab" data-v="today" data-t="today"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.500"/><path d="M12 7.500V12l3 2"/></svg><span>Bugün</span></button>
+  <button data-a="tab" data-v="plan" data-t="plan"><svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h9"/></svg><span>Plan</span></button>
+  <button class="fab" data-a="add" aria-label="Öğün ekle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button data-a="tab" data-v="prog" data-t="prog"><svg viewBox="0 0 24 24"><path d="M4 18l5-6 4 3 7-9"/></svg><span>İlerleme</span></button>
+  <button data-a="tab" data-v="prof" data-t="prof"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.500" r="3.800"/><path d="M4.500 20c1-4 4-5.500 7.500-5.500s6.500 1.500 7.500 5.500"/></svg><span>Profil</span></button>
+</nav>
+
+<div id="scrim"></div>
+<section id="sheet" role="dialog" aria-modal="true" aria-label="Öğün ekle"></section>
+<div id="toast" role="status"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
